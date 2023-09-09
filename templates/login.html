@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block head %}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row mt-5">
+        <h1 class="">Login</h1>
+        <div class="col d-flex justify-content-sm-center">
+            <form id="login-form" method="POST" action="{{url_for('login')}}">
+                <div class="mb-3">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ wtf.form_field(form.username) }}
+                </div>
+                <div class="mb-3">
+                    {{ wtf.form_field(form.password) }}
+                </div>
+                <div class="mb-3">
+                    {{ wtf.form_field(form.remember) }}
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+            <br><a href="{{url_for('register')}}">Don't have an account? Create one here.</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

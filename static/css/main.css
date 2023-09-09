@@ -1,0 +1,79 @@
+header,#navbarNavDropdown{
+    min-height: 85px;
+}
+
+.navbar-brand img::before {
+    display: block;
+    content: '';
+    padding-top: calc(100% * 2 / 3);
+  }
+  
+.alert{
+    text-align:center;
+}
+
+  .hero{
+    background-image: url(/static/images/money-2724248_1280.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: bottom;
+  }
+
+  .hero-title{
+    color:#fff;
+    -webkit-text-stroke: .5px #000;
+    text-shadow: 1px 3px 4px #000;
+  }
+
+  .hero-lead{
+    color:#fff;
+    text-shadow: 1px 2px 6px #000;
+  }
+
+  .card{
+    min-height:200px;
+    border:none !important;
+  }
+
+  .card-body{
+    position:relative;
+  }
+
+  .after{
+    padding:6px;
+ }
+
+ #register-form input::placeholder{
+    opacity: .4;
+ }
+
+table{
+    width:500px;
+}
+
+table,td{
+    border:1px solid !important;
+}
+
+ th,td{
+    padding:10px;
+    padding-right:40px
+    
+  }
+
+  th{
+    background-color:#0D6EFD;
+    color:#fff
+  }
+
+  .inc_exp_btn{
+    display:inline-block;
+  }
+
+  a.view{
+    display:block !important;
+  }
+
+  .property_display img{
+    max-width:250px;
+  }

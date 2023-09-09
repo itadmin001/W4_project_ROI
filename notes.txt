@@ -1,0 +1,64 @@
+
+calculate roi
+
+storage of properties for users
+
+properties have expenses
+
+calculate ROI and display / store per property
+
+API to grab gross median rent by state
+
+Class User
+    DB
+
+    login / logout
+
+    menu control? JS?
+
+    password function to work with bcrypt
+
+Class Property
+    DB
+
+    check if logged in
+
+    grab median rent by state (api)
+
+    form for data entry
+
+Class Income
+    DB
+
+Class Expense 
+    DB
+
+
+Properties page
+	-Add Property
+		-address
+		-estimated rent
+		-purchase price
+		-created on: 
+		-add expenses
+			-expense name
+			-expense amount
+		-add income opportunity
+			-income name
+			-income amount
+	-View Properties
+
+
+
+
+inc_id =                Column("inc_id",Integer, primary_key=True,autoincrement=True)
+    prop_id =               Column("prop_id",Integer,ForeignKey('property.property_id'))
+    name =                  Column(Text,default='none')
+    amount =                Column(Numeric(10,2),default=0)
+    user_id =               Column(Integer,ForeignKey('Users.user_id'))
+
+prop_id =               Column(Integer, primary_key=True,autoincrement=True)
+    address =               Column(Text,default='none')
+    purch_price =           Column(Numeric(10,2),default=0)
+    est_rent =              Column(Numeric(10,2),default=0)
+    user_id =               Column(Integer,For

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block head %}
+
+<link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+
+
+{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block body %}
+
+<div class="container">
+    <h1>Add Property</h1>
+    <div class="row">
+        <div class="col d-flex justify-content-sm-center">
+            <form action="{{ url_for('add_edit') }}" method="POST">
+                <div class="mb-3">
+                    {{ form.hidden_tag() }}
+                    {{ wtf.form_field(form.address) }}
+                  <!--<input type="text" class="form-control" id="PropAddress" name="PropAddress" value="" placeholder="Address">-->
+                </div>
+            
+                <div class="mb-3">
+                    <div class="form-group">
+                        {{ wtf.form_field(form.purch_price) }}
+                    <!-- <input type="text" class="form-control" id="PruchasePrice" name="PurchasePrice" value="" placeholder="Purchase Price"> -->
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-group">
+                        {{ wtf.form_field(form.est_rent) }} 
+                        <!-- <input type="text" class="form-control" id="EstRent" name="EstRent" value="" placeholder="Estimated Rent"> -->
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-group">
+                        {{ wtf.form_field(form.image) }} 
+                        <!-- <input type="text" class="form-control" id="EstRent" name="EstRent" value="" placeholder="Estimated Rent"> -->
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="background-color: #0D6EFD;">Submit</button>
+            </form>
+            
+        </div> 
+    </div>
+</div>
+
+{% endblock %}

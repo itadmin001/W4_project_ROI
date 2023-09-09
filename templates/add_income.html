@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block head %}
+
+{% endblock %}
+
+
+{% block body %}
+
+<div class="container">
+    <div class="row mt-5">
+        <h1 class="text-center mb-5">Editing Incomes for: {{address}}</h1>
+        <div class="col d-flex justify-content-sm-center">
+            <form id="inc-exp-form" method="POST" action="/Income/{{id}}">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ wtf.form_field(form.income_name) }}
+                </div>
+                <div class="mb-3">
+                    {{ wtf.form_field(form.income_amt) }}
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="icon" type="image/x-icon" href="/static/images/calculator.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+
+    <title>ROI Calc</title>
+    {% block head %}{% endblock %}
+</head>
+<header>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary fixed sticky">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#"><img src="../static/images/JH-logo-gradient.png" alt="logo" style="max-width: 50px;"></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="{{url_for('index')}}">Home</a>
+              </li>
+            {% if current_user.is_authenticated %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('account')}}">My Account</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('properties')}}">My Properties</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('logout')}}">Log Out</a>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('login')}}">Log In</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('register')}}">Register</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for('contact')}}">Contact</a>
+            {% endif %}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+</header>
+
+  {% block header %}{% endblock %}
+  
+<body>
+    {% for message in get_flashed_messages() %}
+    
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    
+    {% endfor %}
+    {% block body %}{% endblock body %}
+</body>
+</html>
