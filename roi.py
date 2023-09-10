@@ -1,8 +1,7 @@
-from flask import Flask, render_template, url_for,request,redirect,flash,session,abort
+from flask import Flask, render_template, url_for,redirect,flash,request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import delete,select,update,and_,create_engine
+from sqlalchemy import delete,select,update,and_,Column, String, Integer,DateTime,ForeignKey,Text,text,Numeric
 from sqlalchemy.orm import relationship,backref
-from sqlalchemy import create_engine, Column, String, Integer,DateTime,UniqueConstraint,ForeignKey,Text,text,Numeric,insert,update
 from datetime import datetime
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager,UserMixin,login_required,login_user,logout_user,current_user
@@ -12,15 +11,11 @@ from wtforms.validators import InputRequired,Email,Length
 import locale
 from helper import get_image,calc_roi
 from flask_migrate import Migrate
-from jinja2 import Environment, FileSystemLoader
 
 locale.setlocale(locale.LC_ALL,'')
 locale.currency(12345.67, grouping=True)
 
 roi = Flask(__name__)
-
-env = Environment(loader=FileSystemLoader("/srv/templates/"))
-env.globals.update({"calc_roi":calc_roi})
 
 roi.config['SECRET_KEY'] = 'superKalfragilistic'
 login_manager=LoginManager()
@@ -33,11 +28,9 @@ db=SQLAlchemy(roi)
 # db.init_app(roi)
 migrate = Migrate(roi, db)
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return Users.query.get(user_id)
-
 
 class Users(db.Model,UserMixin):
     __tablename__ = "users"
@@ -59,7 +52,6 @@ class Users(db.Model,UserMixin):
         self.password = password
         self.username = username
 
-
     def pass_hash(password):
         hash_pwd = bcrypt.generate_password_hash(password)
         return hash_pwd.decode('utf-8')
@@ -68,7 +60,7 @@ class Users(db.Model,UserMixin):
         return self.user_id
 
     def __repr__(self):
-        return f"User: {self.first_name} {self.last_name} Email: {self.email}"
+        return f"<USER ID: {self.user_id}>"
     
 class Income(db.Model):
     __tablename__ =         "income"
@@ -86,8 +78,7 @@ class Income(db.Model):
 
     def __repr__(self):
         return f"<INCOME: {self.name} AMOUNT: {self.amount}>"
-
-     
+    
 class Expenses(db.Model):
     __tablename__ =         "expense"
     exp_id =                Column("inc_id",Integer, primary_key=True,autoincrement=True)
@@ -130,8 +121,7 @@ class Property(db.Model):
         return image
     
     def __repr__(self):
-        return f"<ADDRESS: {self.address}"
-
+        return f"<ADDRESS: {self.address}>"
 
 class LoginForm(FlaskForm):
     username = StringField('username', validators=[InputRequired(),Length(min=4,max=15)])
@@ -162,7 +152,6 @@ class ExpenseForm(FlaskForm):
     expense_name =      StringField("Expense Name")
     property_id =       HiddenField(Integer)
 
-
 @roi.route('/', methods = ['POST','GET'])
 def index():
     return render_template('index.html')
@@ -191,21 +180,19 @@ def add_image(prop_id):
     form=AddImageForm()
     if form.validate_on_submit():
         img_url = form.imageURL.data
-
         #### This looks like the safer and more acceptable way to add/update ####
         
         query = text('UPDATE property SET image = :img_url WHERE property.prop_id = :prop_id AND property._user_id = :user_id')
         db.session.execute(query, {"img_url": img_url, "prop_id": prop_id, "_user_id": current_user.user_id})
         db.session.commit()
         return redirect('/properties')
+    
     return render_template('add_image.html',form=form,prop_id=prop_id)
-
 
 @roi.route('/add-edit',methods=['POST','GET'])
 @login_required
 def add_edit():
-    form = AddPropertyForm()
-    
+    form = AddPropertyForm()  
     if form.validate_on_submit():
         address = form.address.data
         purchase = form.purch_price.data
@@ -214,10 +201,8 @@ def add_edit():
         new_property=Property(address=address,purch_price=purchase,est_rent=est_rent,_user_id=current_user.user_id)
         db.session.add(new_property)
         db.session.commit()
-
         prop_id_q = db.session.execute(select(Property.prop_id).where(Property.address == address))
         prop_id = prop_id_q.all()[0][0]
-
         expense_amount = purchase_price
         expense_name = "Purchase Price"
         new_expense=Expenses(name=expense_name,amount=expense_amount,prop_id=prop_id,user_id=current_user.user_id)
@@ -225,17 +210,13 @@ def add_edit():
         db.session.commit()
         return redirect(url_for('properties'))
     
-
-
     return render_template('add_edit_property.html',form=form)
 
 @roi.route('/delete/<id>', methods=['POST','GET'])
 @login_required
 def prop_delete(id):
-
     db.session.execute(delete(Property).where(Property.prop_id == id))
     db.session.commit()
-
     return redirect('/properties')
 
 @roi.route('/view-exp-inc',defaults={'id':0}, methods = ['POST','GET'])
@@ -243,10 +224,8 @@ def prop_delete(id):
 @login_required
 
 def view_exp_inc(id):
-
     prop_data=db.session.execute(select(Property).join(Users).filter(Users.user_id==current_user.user_id).filter(Property.prop_id==id))
     property = [data[0] for data in prop_data]
-    print(property[0].address)
     income_data = db.session.execute(select(Income).join(Property).filter(Income.prop_id == id))
     expense_data = db.session.execute(select(Expenses).join(Property).filter(Expenses.prop_id == id))
     incomes=(income_data.freeze().data)
@@ -257,19 +236,13 @@ def view_exp_inc(id):
     else:
         income_sum=0
         for income in incomes:
-            income_sum+=income.amount
-            
+            income_sum+=income.amount      
         expense_sum=0
         for expense in expenses:
             expense_sum+=expense.amount
 
-
         return render_template('inc_exp_view.html',incomes=incomes,expenses=expenses,property=property,expense_sum=expense_sum,income_sum=income_sum)
 
-
-@roi.get('/Income?prop_id=<id>')
-def get_prop_id(id):
-    return id
 @roi.route('/Income',defaults={'id':0},methods=['POST','GET'])
 @roi.route('/Income/<id>',methods=['POST','GET'])
 @login_required
@@ -278,7 +251,6 @@ def add_inc(id):
     props=list(map(list, prop))
     address = props[0][0].address
     form = IncomeForm()
-    
     if request.method=="POST" and form.validate_on_submit():
         prop_id = id
         income_amount = form.income_amt.data
@@ -295,8 +267,8 @@ def add_inc(id):
         query=text(f'UPDATE property SET roi = {roif} WHERE property.prop_id = {prop_id}')
         db.session.execute(query)
         db.session.commit()
-
         return redirect('/properties')
+    
     return render_template('add_income.html',form=form,id=id,address=address)
 
 @roi.route('/Expense',defaults={'id':0},methods=['POST','GET'])
@@ -307,15 +279,14 @@ def add_exp(id):
     address = prop.freeze().data[0].address
     form = ExpenseForm()
     if request.method=="POST" and form.validate_on_submit():
-        print("POST")
         prop_id = id
         expense_amount = form.expense_amt.data
         expense_name = form.expense_name.data
-        print(f"Expense Amt: {expense_amount}\nExpense Name: {expense_name}\nProperty ID: {prop_id}")
         new_expense=Expenses(name=expense_name,amount=expense_amount,prop_id=id,user_id=current_user.user_id)
         db.session.add(new_expense)
         db.session.commit()
         return redirect('/properties')
+    
     return render_template('add_expense.html',form=form,id=id,address=address)
     
 @roi.route('/contact', methods = ['POST','GET'])
@@ -325,16 +296,13 @@ def contact():
 @roi.route('/login', methods = ['POST','GET'])
 def login():
     form = LoginForm()
-
     if request.method == 'POST':
         user_data = db.session.execute(select(Users).where(Users.username == form.username.data))
         user = (user_data.freeze().data)
-
         if len(user) < 1:
             flash("Username not found")
             # render_template('login.html',form=form)
         else:
-
             if form.validate_on_submit():
                 password = form.password.data
                 pwd = user[0].password
@@ -346,18 +314,15 @@ def login():
                         db.session.commit()
                         login_user(user[0], remember=True)
                         flash('Logged in successfully.')
-
                         next = request.args.get('next')
-
                         return redirect(next or url_for('account'))
-
                     else: 
                         flash('Incorrect Password')
                         return render_template("login.html",form=form)
                 else: 
                     flash("User not found")
-                    return render_template("login.html",form=form)
-        
+                    return render_template("login.html",form=form)   
+                  
     return render_template("login.html",form=form)
 
 @roi.route("/logout", methods=['GET','POST'])
@@ -374,13 +339,11 @@ def logout():
 @roi.route('/register', methods = ['POST','GET'])
 def register():
     form=RegisterForm()
-    
     if form.validate_on_submit():
         usrname = form.username.data
         eml = form.email.data
         username_check = (db.session.execute(select(Users).where(Users.username==usrname))).freeze().data
         email_check = (db.session.execute(select(Users).where(eml==Users.email))).freeze().data
-    
         if len(email_check) > 0:
             flash('This email address is already in use', category='error')
         elif len(username_check) > 0:
@@ -390,7 +353,6 @@ def register():
             new_user = Users(username=usrname,email=eml,password=hpwd)
             db.session.add(new_user)
             db.session.commit()
-
             return redirect(url_for('login'))
 
     return render_template('register.html',form=form)
