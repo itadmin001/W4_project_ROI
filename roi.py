@@ -1,7 +1,7 @@
 from flask import Flask, render_template, url_for,request,redirect,flash,session,abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import delete,select,update,and_,create_engine
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship,backref
 from sqlalchemy import create_engine, Column, String, Integer,DateTime,UniqueConstraint,ForeignKey,Text,text,Numeric,insert,update
 from datetime import datetime
 from flask_bcrypt import Bcrypt
@@ -28,10 +28,10 @@ login_manager.login_view = "login"
 login_manager.init_app(roi)
 bcrypt = Bcrypt(roi)
 
-roi.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///roi'
+roi.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://hbfbkyvp:iMgXa9wFPwNZCbuzOd8A9kITRc_522Cg@isilo.db.elephantsql.com/hbfbkyvp'
 db=SQLAlchemy(roi)
 # db.init_app(roi)
-# migrate = Migrate(roi, db)
+migrate = Migrate(roi, db)
 
 
 @login_manager.user_loader
@@ -49,7 +49,7 @@ class Users(db.Model,UserMixin):
     username =          Column("username",Text,unique=True,nullable=False)
     password =          Column("pwd",Text,nullable=False)
     created_on =        Column("created_on", DateTime(timezone=True),default=datetime.now())
-    properties =        relationship('Property', backref='users',cascade='all,delete')
+    property =          relationship('Property', backref='users',cascade='all,delete',passive_deletes=True)
 
     def __init__(self, email, password,username):
         self.first_name = ""
@@ -62,45 +62,18 @@ class Users(db.Model,UserMixin):
 
     def pass_hash(password):
         hash_pwd = bcrypt.generate_password_hash(password)
-        return hash_pwd
+        return hash_pwd.decode('utf-8')
     
     def get_id(self):
         return self.user_id
 
     def __repr__(self):
-        return f"User: {self.first_name} {self.last_name} Email: {self.email} Phone: {self.phone} User ID: {self.user_id} password: {self.password} "
-
-class Property(db.Model):
-    __tablename__ =         "property"
-    prop_id =               Column(Integer, primary_key=True,autoincrement=True)
-    address =               Column(Text,nullable=False)
-    purch_price =           Column(Numeric(10,2),nullable=False)
-    est_rent =              Column(Numeric(10,2),nullable=False)
-    user_id =               Column(Integer,ForeignKey('users.user_id'))
-    image =                 Column(String, nullable=False)
-    roi =                   Column(Numeric(5,2))
-    incomes =               relationship('Income', backref='property', cascade='all,delete')
-    expenses =              relationship('Expenses', backref='property', cascade='all,delete')
+        return f"User: {self.first_name} {self.last_name} Email: {self.email}"
     
-    def __init__(self,address,purch_price,est_rent,user_id,image=""):
-        self.address = address
-        self.purch_price = purch_price
-        self.est_rent = est_rent
-        self.user_id = user_id
-        self.image = self.set_image(image,address)
-
-    def set_image(self,image,address):
-        if not image:
-            image=get_image(address)
-        return image
-    
-    def __repr__(self):
-        return f"<ADDRESS: {self.address}"
-
 class Income(db.Model):
     __tablename__ =         "income"
     inc_id =                Column("inc_id",Integer, primary_key=True,autoincrement=True)
-    prop_id =               Column("prop_id",Integer,ForeignKey('property.prop_id'))
+    prop_id =               Column("prop_id",Integer,ForeignKey('property.prop_id',ondelete='cascade'))
     name =                  Column("name",Text,default = "")
     amount =                Column("amount",Numeric(10,2),default=0)
     user_id =               Column(Integer,ForeignKey('users.user_id'))
@@ -118,7 +91,7 @@ class Income(db.Model):
 class Expenses(db.Model):
     __tablename__ =         "expense"
     exp_id =                Column("inc_id",Integer, primary_key=True,autoincrement=True)
-    prop_id =               Column("prop_id",Integer,ForeignKey('property.prop_id'))
+    prop_id =               Column("prop_id",Integer,ForeignKey('property.prop_id',ondelete='cascade'))
     name =                  Column("name",Text,default='none')
     amount =                Column("amount",Numeric(10,2),default=0)
     user_id =               Column(Integer,ForeignKey('users.user_id'))
@@ -131,6 +104,33 @@ class Expenses(db.Model):
 
     def __repr__(self):
         return f"<EXPENSE: {self.name} AMOUNT: {self.amount}>"
+
+class Property(db.Model):
+    __tablename__ =         "property"
+    prop_id =               Column(Integer, primary_key=True,autoincrement=True)
+    address =               Column(Text,nullable=False)
+    purch_price =           Column(Numeric(10,2),nullable=False)
+    est_rent =              Column(Numeric(10,2),nullable=False)
+    _user_id =              Column(Integer,ForeignKey('users.user_id',ondelete='cascade'))
+    image =                 Column(String, nullable=False)
+    roi =                   Column(Numeric(5,2))
+    income =                relationship('Income', backref='property', cascade='all,delete',passive_deletes=True)
+    expenses =              relationship('Expenses', backref='property', cascade='all,delete',passive_deletes=True)
+    
+    def __init__(self,address,purch_price,est_rent,_user_id,image=""):
+        self.address = address
+        self.purch_price = purch_price
+        self.est_rent = est_rent
+        self._user_id = _user_id
+        self.image = self.set_image(image,address)
+
+    def set_image(self,image,address):
+        if not image:
+            image=get_image(address)
+        return image
+    
+    def __repr__(self):
+        return f"<ADDRESS: {self.address}"
 
 
 class LoginForm(FlaskForm):
@@ -176,12 +176,12 @@ def account():
 @login_required
 def properties():
    
-    prop_data= db.session.execute(text(f'SELECT * FROM property WHERE user_id = {current_user.user_id}'))
+    prop_data= db.session.execute(text(f'SELECT * FROM property WHERE _user_id = {current_user.user_id}'))
     prop_count = len(prop_data.all())
     if prop_count < 1:
         return render_template('my_properties.html', no_properties=True)
     
-    prop_data= db.session.execute(text(f'SELECT * FROM property WHERE user_id = {current_user.user_id}'))
+    prop_data= db.session.execute(text(f'SELECT * FROM property WHERE _user_id = {current_user.user_id}'))
     properties = prop_data.all()
     return render_template('my_properties.html',properties=properties)
 
@@ -194,8 +194,8 @@ def add_image(prop_id):
 
         #### This looks like the safer and more acceptable way to add/update ####
         
-        query = text('UPDATE property SET image = :img_url WHERE property.prop_id = :prop_id AND property.user_id = :user_id')
-        db.session.execute(query, {"img_url": img_url, "prop_id": prop_id, "user_id": current_user.user_id})
+        query = text('UPDATE property SET image = :img_url WHERE property.prop_id = :prop_id AND property._user_id = :user_id')
+        db.session.execute(query, {"img_url": img_url, "prop_id": prop_id, "_user_id": current_user.user_id})
         db.session.commit()
         return redirect('/properties')
     return render_template('add_image.html',form=form,prop_id=prop_id)
@@ -211,7 +211,7 @@ def add_edit():
         purchase = form.purch_price.data
         est_rent = form.est_rent.data
         purchase_price = form.purch_price.data
-        new_property=Property(address=address,purch_price=purchase,est_rent=est_rent,user_id=current_user.user_id)
+        new_property=Property(address=address,purch_price=purchase,est_rent=est_rent,_user_id=current_user.user_id)
         db.session.add(new_property)
         db.session.commit()
 
