@@ -1,7 +1,7 @@
 from flask import Flask, render_template, url_for,redirect,flash,request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import delete,select,update,and_,Column, String, Integer,DateTime,ForeignKey,Text,text,Numeric
-from sqlalchemy.orm import relationship,backref
+from sqlalchemy import delete,select,Column, String, Integer,DateTime,ForeignKey,Text,text,Numeric
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager,UserMixin,login_required,login_user,logout_user,current_user
@@ -16,17 +16,14 @@ locale.setlocale(locale.LC_ALL,'')
 locale.currency(12345.67, grouping=True)
 
 roi = Flask(__name__)
-
 roi.config['SECRET_KEY'] = 'superKalfragilistic'
+roi.config['FLASK_APP'] = '.'
 login_manager=LoginManager()
 login_manager.login_view = "login"
 login_manager.init_app(roi)
 bcrypt = Bcrypt(roi)
-
 roi.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://hbfbkyvp:iMgXa9wFPwNZCbuzOd8A9kITRc_522Cg@isilo.db.elephantsql.com/hbfbkyvp'
 db=SQLAlchemy(roi)
-# db.init_app(roi)
-migrate = Migrate(roi, db)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -181,8 +178,8 @@ def add_image(prop_id):
     if form.validate_on_submit():
         img_url = form.imageURL.data
         #### This looks like the safer and more acceptable way to add/update ####
-        
-        query = text('UPDATE property SET image = :img_url WHERE property.prop_id = :prop_id AND property._user_id = :user_id')
+        _user_id = current_user.user_id
+        query = text('UPDATE property SET image = :img_url WHERE property.prop_id = :prop_id AND property._user_id = :_user_id')
         db.session.execute(query, {"img_url": img_url, "prop_id": prop_id, "_user_id": current_user.user_id})
         db.session.commit()
         return redirect('/properties')
@@ -361,4 +358,4 @@ with roi.app_context():
     db.create_all()
 
 if __name__ == '__main__':
-    roi.run(debug=True)
+    roi.run(host="localhost",port=5000,debug=True)
